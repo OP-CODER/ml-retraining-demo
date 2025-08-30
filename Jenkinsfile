@@ -25,7 +25,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGE_NAME}:${TAG}")
+                    docker.build("${env.IMAGE_NAME}:${env.TAG}")
                 }
             }
         }
@@ -37,8 +37,8 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry(REGISTRY, 'docker-hub-token') {
-                        docker.image("${IMAGE_NAME}:${TAG}").push()
+                    docker.withRegistry(env.REGISTRY, 'docker-hub-token') {
+                        docker.image("${env.IMAGE_NAME}:${env.TAG}").push()
                     }
                 }
             }
