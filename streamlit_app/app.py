@@ -1,44 +1,47 @@
 import streamlit as st
-import subprocess
-import os
-import sys
+import requests
+from requests.auth import HTTPBasicAuth
+import time
 
-# Path to metrics file saved by training script
-METRICS_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'training', 'model', 'metrics.txt')
-)
+JENKINS_URL = 'http://localhost:8080'
+JOB_NAME = 'ml-retraining-demo'
+USER = 'admin'
+API_TOKEN = '1193221706f44c4de96c269d2982546ade'
+JOB_TOKEN = 'ENKINS_URL/job/ml-retraining-demo/build?token=TOKEN_NAME or /buildWithParameters?token=a1b2c3d4e5'  # configured in Jenkins job trigger
 
-st.title('ML Model Retraining Dashboard')
-
-def read_metrics():
-    st.write("DEBUG: Looking for metrics at:", METRICS_PATH)  # 👈 shows exact path
-    if os.path.exists(METRICS_PATH):
-        st.write("DEBUG: Metrics file FOUND ✅")
-        with open(METRICS_PATH, 'r') as f:
-            return f.read()
+def trigger_job():
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/build?token={JOB_TOKEN}"
+    response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN))
+    if response.status_code == 201:
+        return True
     else:
-        st.write("DEBUG: Metrics file NOT FOUND ❌")
-    return 'No metrics found. Please retrain the model.'
+        st.error(f"Failed to trigger job: {response.status_code}")
+        return False
 
-def trigger_retraining():
-    st.info('Triggering retraining...')
-    train_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'training', 'train.py'))
-    python_exe = sys.executable
-    try:
-        result = subprocess.run([python_exe, train_py_path],
-                                capture_output=True, text=True, check=True)
-        st.success('Retraining completed successfully!')
-        st.text('Output:\n' + result.stdout)
+def get_last_build_status():
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/api/json"
+    response = requests.get(url, auth=HTTPBasicAuth(USER, API_TOKEN))
+    if response.status_code == 200:
+        data = response.json()
+        if data['building']:  # job still running
+            return "BUILDING"
+        else:
+            return data['result']  # SUCCESS or FAILURE
+    else:
+        return None
 
-        # 🔑 Immediately refresh and show metrics after retraining
-        st.subheader('Latest Model Metrics:')
-        st.text(read_metrics())
-
-    except subprocess.CalledProcessError as e:
-        st.error(f'Retraining failed with error:\n{e.stderr}')
-
-if st.button('Trigger Model Retraining'):
-    trigger_retraining()
-else:
-    st.subheader('Latest Model Metrics:')
-    st.text(read_metrics())
+if st.button('Run Jenkins Job'):
+    if trigger_job():
+        st.info("Job triggered. Waiting for completion...")
+        while True:
+            status = get_last_build_status()
+            if status == "BUILDING":
+                time.sleep(5)
+                st.info("Job running...")
+            else:
+                if status == "SUCCESS":
+                    st.success("Job completed successfully! Showing metrics...")
+                    # TODO: Add code to fetch and display metrics here
+                else:
+                    st.error("Job failed.")
+                break
