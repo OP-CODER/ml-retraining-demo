@@ -4,7 +4,7 @@ import os
 import sys
 
 # Path to metrics file saved by training script
-METRICS_PATH = os.path.join(os.path.dirname(__file__), 'training', 'model', 'metrics.txt')
+METRICS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'training', 'model', 'metrics.txt'))
 
 st.title('ML Model Retraining Dashboard')
 
@@ -31,6 +31,6 @@ if st.button('Trigger Model Retraining'):
     trigger_retraining()
 
 st.subheader('Latest Model Metrics:')
-st.text_area('Metrics', read_metrics(), height=100)
+st.text(read_metrics())  # display metrics with better formatting
 
-st.write('Please refresh the page manually to see latest metrics.')
+st.caption('Metrics are updated after retraining. Refresh if needed.')

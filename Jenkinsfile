@@ -37,7 +37,7 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry(env.REGISTRY, 'docker-hub-token') {
+                    docker.withRegistry(null, 'docker-hub-token') {
                         docker.image("${env.IMAGE_NAME}:${env.TAG}").push()
                     }
                 }
