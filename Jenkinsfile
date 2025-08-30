@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = 'anas974/ml-retraining-app'  // Replace with your Docker Hub username and repo
-        REGISTRY = ''  // Empty to use default Docker Hub registry
+        IMAGE_NAME = 'anas974/ml-retraining-app'
         TAG = "${env.BUILD_NUMBER}"
+        // REGISTRY removed
     }
     stages {
         stage('Checkout') {
