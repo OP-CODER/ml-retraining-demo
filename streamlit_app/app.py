@@ -7,11 +7,21 @@ JENKINS_URL = 'http://localhost:8080'
 JOB_NAME = 'ml-retraining-demo'
 USER = 'admin'
 API_TOKEN = '1193221706f44c4de96c269d2982546ade'
-JOB_TOKEN = 'a1b2c3d4e5'  # configured in Jenkins job trigger
+
+def get_crumb():
+    crumb_url = f"{JENKINS_URL}/crumbIssuer/api/json"
+    response = requests.get(crumb_url, auth=HTTPBasicAuth(USER, API_TOKEN))
+    if response.status_code == 200:
+        crumb_data = response.json()
+        return {crumb_data['crumbRequestField']: crumb_data['crumb']}
+    else:
+        st.error(f"Failed to get Jenkins crumb: {response.status_code}")
+        return {}
 
 def trigger_job():
-    url = f"{JENKINS_URL}/job/{JOB_NAME}/build?token={JOB_TOKEN}"
-    response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN))
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/build"
+    headers = get_crumb()
+    response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN), headers=headers)
     if response.status_code == 201:
         return True
     else:
