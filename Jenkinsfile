@@ -43,6 +43,12 @@ pipeline {
                 }
             }
         }
+         stage('Verify kubectl access') {
+             steps {
+                 bat 'kubectl get nodes'
+               }
+            }
+
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Add your deployment steps here'
