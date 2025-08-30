@@ -31,14 +31,13 @@ pipeline {
         }
         stage('Test') {
             steps {
-                // Add your tests or linting commands here
                 echo 'No automated tests currently configured'
             }
         }
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry("https://${REGISTRY}", 'docker-hub-token')
+                    docker.withRegistry("https://${REGISTRY}", 'docker-hub-token') {
                         docker.image("${IMAGE_NAME}:${TAG}").push()
                     }
                 }
@@ -46,7 +45,6 @@ pipeline {
         }
         stage('Deploy to Kubernetes') {
             steps {
-                // Add your kubectl or helm deployment commands here
                 echo 'Add your deployment steps here'
             }
         }
