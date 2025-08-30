@@ -60,7 +60,7 @@ pipeline {
                     def serviceType = params.K8S_ENV == 'EKS' ? 'LoadBalancer' : 'NodePort'
 
                     // Read manifests with placeholders
-                    def deploymentYaml = readFile('k8s-deployment.yml').replace('{{TAG}}', env.TAG)
+                    def deploymentYaml = readFile('deployment.yml').replace('{{TAG}}', env.TAG)
                     def serviceYaml = readFile('service.yml').replace('{{SERVICE_TYPE}}', serviceType)
 
                     // Write replaced manifests to temp files
