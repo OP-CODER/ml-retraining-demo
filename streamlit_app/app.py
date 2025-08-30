@@ -7,7 +7,7 @@ JENKINS_URL = 'http://localhost:8080'
 JOB_NAME = 'ml-retraining-demo'
 USER = 'admin'
 API_TOKEN = '1193221706f44c4de96c269d2982546ade'
-JOB_TOKEN = 'ENKINS_URL/job/ml-retraining-demo/build?token=TOKEN_NAME or /buildWithParameters?token=a1b2c3d4e5'  # configured in Jenkins job trigger
+JOB_TOKEN = 'a1b2c3d4e5'  # configured in Jenkins job trigger
 
 def trigger_job():
     url = f"{JENKINS_URL}/job/{JOB_NAME}/build?token={JOB_TOKEN}"
