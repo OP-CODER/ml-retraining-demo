@@ -3,10 +3,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 import time
 
-JENKINS_URL = 'http://192.168.137.1:8080'
+JENKINS_URL = 'http://192.168.56.1:8080'  # Use this if running in Docker to connect to host Jenkins
 JOB_NAME = 'ml-retraining-demo'
 USER = 'admin'
-API_TOKEN = '1193221706f44c4de96c269d2982546ade'  # Update with your Jenkins API token
+API_TOKEN = '11406250be19d6c226692b67dc78f17b14'  # Update with your Jenkins API token
 
 def get_crumb():
     crumb_url = f"{JENKINS_URL}/crumbIssuer/api/json"
@@ -22,11 +22,12 @@ def trigger_job():
     url = f"{JENKINS_URL}/job/{JOB_NAME}/buildWithParameters"
     headers = get_crumb()
     response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN), headers=headers)
-    if response.status_code in [201, 201, 302]:
-        return True 
+    if response.status_code in [200, 201, 302]:
+        return True
     else:
         st.error(f"Failed to trigger job: {response.status_code}")
-        retuen False
+        return False
+
 def get_last_build_status():
     url = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/api/json"
     response = requests.get(url, auth=HTTPBasicAuth(USER, API_TOKEN))
@@ -38,7 +39,6 @@ def get_last_build_status():
             return data['result']
     return None
 
-# Initialize session state
 if 'job_status' not in st.session_state:
     st.session_state.job_status = None
 if 'polling' not in st.session_state:
@@ -57,13 +57,13 @@ if st.session_state.polling:
     status = get_last_build_status()
     if status == "BUILDING":
         st.info("Job running... please wait.")
-        time.sleep(10)  # Pause before next poll
-        st.experimental_rerun()
+        time.sleep(10)
+        st.rerun()
     elif status == "SUCCESS":
         st.success("Job completed successfully! Showing metrics...")
         st.session_state.job_status = "SUCCESS"
         st.session_state.polling = False
-        # TODO: fetch and display metrics here
+        # TODO: Fetch and display metrics here
     elif status == "FAILURE":
         st.error("Job failed.")
         st.session_state.job_status = "FAILURE"

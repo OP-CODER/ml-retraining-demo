@@ -58,13 +58,10 @@ pipeline {
             steps {
                 script {
                     def serviceType = params.K8S_ENV == 'EKS' ? 'LoadBalancer' : 'NodePort'
-                    // Read manifests with placeholders
                     def deploymentYaml = readFile('k8s/deployment.yml').replace('{{TAG}}', env.TAG)
                     def serviceYaml = readFile('k8s/service.yml').replace('{{SERVICE_TYPE}}', serviceType)
-                    // Write replaced manifests to temp files
                     writeFile file: 'deployment-temp.yml', text: deploymentYaml
                     writeFile file: 'service-temp.yml', text: serviceYaml
-                    // Apply manifests and monitor rollout
                     bat 'kubectl apply -f deployment-temp.yml'
                     bat 'kubectl apply -f service-temp.yml'
                     bat 'kubectl rollout status deployment/ml-model-deployment'
@@ -73,8 +70,8 @@ pipeline {
         }
         stage('Publish Metrics') {
             steps {
-                // Adjust metrics file path as per your build artifacts
-                archiveArtifacts artifacts: 'metrics.json', allowEmptyArchive: true
+                bat 'dir training\\metrics.json'  // Verify metric file exists
+                archiveArtifacts artifacts: 'training/metrics.json', allowEmptyArchive: true
             }
         }
     }
