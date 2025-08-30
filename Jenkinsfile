@@ -27,7 +27,7 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry("https://${REGISTRY}", 'docker-credentials-id') {  // Replace 'docker-credentials-id' with your Jenkins Docker Hub credentials ID
+                    docker.withRegistry("https://${REGISTRY}", 'docker-hub-credentials') {  // Replace 'docker-credentials-id' with your Jenkins Docker Hub credentials ID
                         docker.image("${IMAGE_NAME}:${TAG}").push()
                     }
                 }
