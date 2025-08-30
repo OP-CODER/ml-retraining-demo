@@ -24,7 +24,7 @@ def get_crumb():
         return {}
 
 def trigger_job():
-    url = f"{JENKINS_URL}/job/{JOB_NAME}/build"
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/buildWithParameters"
     headers = get_crumb()
     response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN), headers=headers)
     if response.status_code == 201:
