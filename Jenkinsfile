@@ -1,5 +1,12 @@
 pipeline {
     agent any
+    parameters {
+        choice(
+            name: 'K8S_ENV',
+            choices: ['LOCAL', 'EKS'],
+            description: 'Select Kubernetes environment to deploy to'
+        )
+    }
     environment {
         IMAGE_NAME = 'anas974/ml-retraining-app'  // Docker Hub repo name
         TAG = "${env.BUILD_NUMBER}"               // Build number for tagging
@@ -36,22 +43,35 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    // Explicitly specifying Docker Hub registry URL to avoid URL errors
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-token') {
                         docker.image("${env.IMAGE_NAME}:${env.TAG}").push()
                     }
                 }
             }
         }
-         stage('Verify kubectl access') {
-             steps {
-                 bat 'kubectl get nodes'
-               }
+        stage('Verify kubectl access') {
+            steps {
+                bat 'kubectl get nodes'
             }
-
+        }
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Add your deployment steps here'
+                script {
+                    def serviceType = params.K8S_ENV == 'EKS' ? 'LoadBalancer' : 'NodePort'
+
+                    // Read manifests with placeholders
+                    def deploymentYaml = readFile('k8s-deployment.yml').replace('{{TAG}}', env.TAG)
+                    def serviceYaml = readFile('service.yml').replace('{{SERVICE_TYPE}}', serviceType)
+
+                    // Write replaced manifests to temp files
+                    writeFile file: 'deployment-temp.yml', text: deploymentYaml
+                    writeFile file: 'service-temp.yml', text: serviceYaml
+
+                    // Apply manifests and monitor rollout
+                    bat 'kubectl apply -f deployment-temp.yml'
+                    bat 'kubectl apply -f service-temp.yml'
+                    bat 'kubectl rollout status deployment/ml-model-deployment'
+                }
             }
         }
     }
