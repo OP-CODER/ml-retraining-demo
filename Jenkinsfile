@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         IMAGE_NAME = 'anas974/ml-retraining-app'  // Replace with your Docker Hub username and repo
-        REGISTRY = 'registry.hub.docker.com'
+        REGISTRY = ''  // Empty to use default Docker Hub registry
         TAG = "${env.BUILD_NUMBER}"
     }
     stages {
@@ -37,7 +37,7 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry("https://${REGISTRY}", 'docker-hub-token') {
+                    docker.withRegistry(REGISTRY, 'docker-hub-token') {
                         docker.image("${IMAGE_NAME}:${TAG}").push()
                     }
                 }
