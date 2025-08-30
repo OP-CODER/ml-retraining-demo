@@ -1,9 +1,8 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = 'anas974/ml-retraining-app'
-        TAG = "${env.BUILD_NUMBER}"
-        // REGISTRY removed
+        IMAGE_NAME = 'anas974/ml-retraining-app'  // Docker Hub repo name
+        TAG = "${env.BUILD_NUMBER}"               // Build number for tagging
     }
     stages {
         stage('Checkout') {
@@ -37,7 +36,8 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry(null, 'docker-hub-token') {
+                    // Explicitly specifying Docker Hub registry URL to avoid URL errors
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-token') {
                         docker.image("${env.IMAGE_NAME}:${env.TAG}").push()
                     }
                 }
