@@ -3,15 +3,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 import time
 
-JENKINS_URL = 'http://localhost:8080'
+JENKINS_URL = 'http://192.168.137.1:8080'
 JOB_NAME = 'ml-retraining-demo'
 USER = 'admin'
-API_TOKEN = '1193221706f44c4de96c269d2982546ade'  # Replace with your Jenkins API token
-
-st.title("ML Model Jenkins Job Control Dashboard")
-
-# Sidebar environment selector
-env_option = st.sidebar.selectbox("Select Deployment Environment", ['LOCAL', 'EKS'])
+API_TOKEN = '1193221706f44c4de96c269d2982546ade'  # Update with your Jenkins API token
 
 def get_crumb():
     crumb_url = f"{JENKINS_URL}/crumbIssuer/api/json"
@@ -27,12 +22,11 @@ def trigger_job():
     url = f"{JENKINS_URL}/job/{JOB_NAME}/buildWithParameters"
     headers = get_crumb()
     response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN), headers=headers)
-    if response.status_code == 201:
-        return True
+    if response.status_code in [201, 201, 302]:
+        return True 
     else:
         st.error(f"Failed to trigger job: {response.status_code}")
-        return False
-
+        retuen False
 def get_last_build_status():
     url = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/api/json"
     response = requests.get(url, auth=HTTPBasicAuth(USER, API_TOKEN))
@@ -42,36 +36,46 @@ def get_last_build_status():
             return "BUILDING"
         else:
             return data['result']
-    else:
-        return None
+    return None
 
-job_triggered = st.button('Run Jenkins Job')
+# Initialize session state
+if 'job_status' not in st.session_state:
+    st.session_state.job_status = None
+if 'polling' not in st.session_state:
+    st.session_state.polling = False
 
-if job_triggered:
+st.title("ML Model Jenkins Job Control Dashboard")
+
+if st.button('Run Jenkins Job') and not st.session_state.polling:
     if trigger_job():
-        st.info("Job triggered. Waiting for completion...")
-        while True:
-            status = get_last_build_status()
-            if status == "BUILDING":
-                st.info("Job running...")
-                time.sleep(10)
-                st.experimental_rerun()
-            elif status == "SUCCESS":
-                st.success("Job completed successfully! Showing metrics...")
-                # TODO: Fetch and display metrics here
-                break
-            elif status == "FAILURE":
-                st.error("Job failed.")
-                break
-            else:
-                st.warning("Unable to get job status.")
-                break
-else:
+        st.session_state.job_status = "BUILDING"
+        st.session_state.polling = True
+    else:
+        st.error("Failed to trigger Jenkins job.")
+
+if st.session_state.polling:
     status = get_last_build_status()
     if status == "BUILDING":
-        st.info("A job is currently running...")
+        st.info("Job running... please wait.")
+        time.sleep(10)  # Pause before next poll
+        st.experimental_rerun()
     elif status == "SUCCESS":
+        st.success("Job completed successfully! Showing metrics...")
+        st.session_state.job_status = "SUCCESS"
+        st.session_state.polling = False
+        # TODO: fetch and display metrics here
+    elif status == "FAILURE":
+        st.error("Job failed.")
+        st.session_state.job_status = "FAILURE"
+        st.session_state.polling = False
+    else:
+        st.warning("Unable to get job status.")
+        st.session_state.polling = False
+else:
+    if st.session_state.job_status == "SUCCESS":
         st.success("Last job completed successfully.")
         # TODO: Optionally show last metrics here
-    elif status == "FAILURE":
+    elif st.session_state.job_status == "FAILURE":
         st.error("Last job failed.")
+    elif st.session_state.job_status == "BUILDING":
+        st.info("A job is currently running...")
