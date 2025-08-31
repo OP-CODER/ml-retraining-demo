@@ -55,7 +55,6 @@ pipeline {
                     }
                 }
             }
-         }
         stage('Verify kubectl access') {
             steps {
                 bat 'kubectl get nodes'
