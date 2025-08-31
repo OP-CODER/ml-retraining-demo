@@ -14,6 +14,7 @@ spec:
     spec:
       containers:
       - name: ml-model-container
-        image: anas974/ml-retraining-app:{{TAG}}
+        image: 108782070222.dkr.ecr.us-east-1.amazonaws.com/ml-retraining-demo:{{TAG}}
         ports:
         - containerPort: 8501
+        - containerPort: 8000

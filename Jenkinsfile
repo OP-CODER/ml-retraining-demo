@@ -8,8 +8,12 @@ pipeline {
         )
     }
     environment {
-        IMAGE_NAME = 'anas974/ml-retraining-app'  // Docker Hub repo name
-        TAG = "${env.BUILD_NUMBER}"               // Build number for tagging
+        AWS_ACCOUNT_ID = '108782070222'
+        AWS_REGION = 'us-east-1'
+        REPO_NAME = 'ml-retraining-demo'
+        IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
+        TAG = "${env.BUILD_NUMBER}"
+}
     }
     stages {
         stage('Checkout') {
@@ -40,15 +44,18 @@ pipeline {
                 echo 'No automated tests currently configured'
             }
         }
-        stage('Push to Registry') {
+        stage('Push to ECR') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-token') {
-                        docker.image("${env.IMAGE_NAME}:${env.TAG}").push()
+                    withAWS(region: "${env.AWS_REGION}", credentials: 'aws-jenkins-credentials') {
+                         sh """
+                           aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                           docker push ${IMAGE_NAME}:${TAG}
+                          """
                     }
                 }
             }
-        }
+         }
         stage('Verify kubectl access') {
             steps {
                 bat 'kubectl get nodes'
