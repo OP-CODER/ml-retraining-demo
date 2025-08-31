@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  labels:
+    app: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:lts
+          ports:
+            - containerPort: 8080
+            - containerPort: 50000
+          env:
+            - name: JAVA_OPTS
+              value: "-Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true"
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+      volumes:
+        - name: jenkins-home
+          emptyDir: {}   # for demo; replace with PVC for persistence
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins
+spec:
+  type: LoadBalancer   # gives you a public URL in AWS
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 50000
+      targetPort: 50000
+      protocol: TCP
+      name: agent
+  selector:
+    app: jenkins

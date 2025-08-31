@@ -22,13 +22,13 @@ pipeline {
         }
         stage('Set Docker Context') {
             steps {
-                bat 'docker context use default'
+                sh 'docker context use default'
             }
         }
         stage('Docker Info Debug') {
             steps {
-                bat 'docker info'
-                bat 'docker context ls'
+                sh 'docker info'
+                sh 'docker context ls'
             }
         }
         stage('Build Docker Image') {
@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     withAWS(region: "${env.AWS_REGION}", credentials: 'aws-credentials-id') {
-                         bat """
+                         sh """
                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                            docker push ${IMAGE_NAME}:${TAG}
                           """
@@ -57,7 +57,7 @@ pipeline {
         }
         stage('Verify kubectl access') {
             steps {
-                bat 'kubectl get nodes'
+                sh 'kubectl get nodes'
             }
         }
         stage('Deploy to Kubernetes') {
@@ -68,15 +68,15 @@ pipeline {
                     def serviceYaml = readFile('k8s/service.yml').replace('{{SERVICE_TYPE}}', serviceType)
                     writeFile file: 'deployment-temp.yml', text: deploymentYaml
                     writeFile file: 'service-temp.yml', text: serviceYaml
-                    bat 'kubectl apply -f deployment-temp.yml'
-                    bat 'kubectl apply -f service-temp.yml'
-                    bat 'kubectl rollout status deployment/ml-model-deployment'
+                    sh 'kubectl apply -f deployment-temp.yml'
+                    sh 'kubectl apply -f service-temp.yml'
+                    sh 'kubectl rollout status deployment/ml-model-deployment'
                 }
             }
         }
         stage('Publish Metrics') {
             steps {
-                bat 'dir training\\metrics.json'  // Verify metric file exists
+                sh 'dir training\\metrics.json'  // Verify metric file exists
                 archiveArtifacts artifacts: 'training/metrics.json', allowEmptyArchive: true
             }
         }
