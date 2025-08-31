@@ -46,7 +46,7 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 script {
-                    withAWS(region: "${env.AWS_REGION}", credentials: 'aws-jenkins-credentials') {
+                    withAWS(region: "${env.AWS_REGION}", credentials: 'aws-credentials-id') {
                          bat """
                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                            docker push ${IMAGE_NAME}:${TAG}
