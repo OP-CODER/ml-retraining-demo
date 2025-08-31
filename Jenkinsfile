@@ -13,7 +13,6 @@ pipeline {
         REPO_NAME = 'ml-retraining-demo'
         IMAGE_NAME = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
         TAG = "${env.BUILD_NUMBER}"
-}
     }
     stages {
         stage('Checkout') {
@@ -48,13 +47,14 @@ pipeline {
             steps {
                 script {
                     withAWS(region: "${env.AWS_REGION}", credentials: 'aws-jenkins-credentials') {
-                         sh """
+                         bat """
                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                            docker push ${IMAGE_NAME}:${TAG}
                           """
                     }
                 }
             }
+        }
         stage('Verify kubectl access') {
             steps {
                 bat 'kubectl get nodes'
