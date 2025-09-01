@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,20 +34,27 @@ spec:
           env:
             - name: JAVA_OPTS
               value: "-Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true"
+          securityContext:
+            runAsUser: 0   # so Jenkins can access Docker socket
           volumeMounts:
             - name: jenkins-home
               mountPath: /var/jenkins_home
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
       volumes:
         - name: jenkins-home
-          emptyDir: {}   # for demo; replace with PVC for persistence
-
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: jenkins
 spec:
-  type: LoadBalancer   # gives you a public URL in AWS
+  type: LoadBalancer
   ports:
     - port: 8080
       targetPort: 8080
