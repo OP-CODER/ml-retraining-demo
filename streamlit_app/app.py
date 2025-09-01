@@ -2,8 +2,9 @@ import streamlit as st
 import requests
 from requests.auth import HTTPBasicAuth
 import time
+import json
 
-JENKINS_URL = 'http://192.168.56.1:8080'  # Use this if running in Docker to connect to host Jenkins
+JENKINS_URL = 'http://10.243.238.147:8080'
 JOB_NAME = 'ml-retraining-demo'
 USER = 'admin'
 API_TOKEN = '11406250be19d6c226692b67dc78f17b14'  # Update with your Jenkins API token
@@ -16,11 +17,13 @@ def get_crumb():
         return {crumb_data['crumbRequestField']: crumb_data['crumb']}
     else:
         st.error(f"Failed to get Jenkins crumb: {response.status_code}")
-        return {}
+        return None
 
 def trigger_job():
-    url = f"{JENKINS_URL}/job/{JOB_NAME}/buildWithParameters"
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/build"
     headers = get_crumb()
+    if headers is None:
+        return False
     response = requests.post(url, auth=HTTPBasicAuth(USER, API_TOKEN), headers=headers)
     if response.status_code in [200, 201, 302]:
         return True
@@ -39,6 +42,22 @@ def get_last_build_status():
             return data['result']
     return None
 
+def fetch_metrics():
+    """Fetch metrics.json artifact from the last successful Jenkins build"""
+    url = f"{JENKINS_URL}/job/{JOB_NAME}/lastSuccessfulBuild/artifact/training/metrics.json"
+    response = requests.get(url, auth=HTTPBasicAuth(USER, API_TOKEN))
+    if response.status_code == 200:
+        try:
+            return response.json()
+        except json.JSONDecodeError:
+            st.error("Metrics file is not valid JSON.")
+            return None
+    else:
+        st.warning("metrics.json not found in artifacts.")
+        return None
+
+
+# ---- Streamlit UI ----
 if 'job_status' not in st.session_state:
     st.session_state.job_status = None
 if 'polling' not in st.session_state:
@@ -63,7 +82,14 @@ if st.session_state.polling:
         st.success("Job completed successfully! Showing metrics...")
         st.session_state.job_status = "SUCCESS"
         st.session_state.polling = False
-        # TODO: Fetch and display metrics here
+
+        metrics = fetch_metrics()
+        if metrics:
+            st.json(metrics)   # show raw JSON
+            # If metrics have accuracy/loss, show in nice table
+            if isinstance(metrics, dict):
+                st.subheader("Model Metrics")
+                st.table(metrics.items())
     elif status == "FAILURE":
         st.error("Job failed.")
         st.session_state.job_status = "FAILURE"
@@ -74,7 +100,10 @@ if st.session_state.polling:
 else:
     if st.session_state.job_status == "SUCCESS":
         st.success("Last job completed successfully.")
-        # TODO: Optionally show last metrics here
+        metrics = fetch_metrics()
+        if metrics:
+            st.subheader("Last Run Metrics")
+            st.table(metrics.items())
     elif st.session_state.job_status == "FAILURE":
         st.error("Last job failed.")
     elif st.session_state.job_status == "BUILDING":
