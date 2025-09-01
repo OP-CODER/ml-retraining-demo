@@ -76,7 +76,7 @@ pipeline {
         }
         stage('Publish Metrics') {
             steps {
-                sh 'dir training\\metrics.json'  // Verify metric file exists
+                bat 'dir training\\metrics.json'  // Verify metric file exists
                 archiveArtifacts artifacts: 'training/metrics.json', allowEmptyArchive: true
             }
         }
