@@ -1,2 +1,13 @@
-Accuracy: 0.9000
-Random seed used for split: 252
+Accuracy: 0.8667
+Random seed used for split: 438
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      setosa       1.00      1.00      1.00         6
+  versicolor       0.75      0.90      0.82        10
+   virginica       0.92      0.79      0.85        14
+
+    accuracy                           0.87        30
+   macro avg       0.89      0.90      0.89        30
+weighted avg       0.88      0.87      0.87        30

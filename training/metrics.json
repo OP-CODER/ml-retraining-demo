@@ -1,12 +1,1 @@
-import json
-
-# Example metrics dictionary, replace with actual metrics variables
-metrics = {
-    "accuracy": 1.0,
-    "precision": {"setosa": 1.0, "versicolor": 1.0, "virginica": 1.0},
-    "recall": {"setosa": 1.0, "versicolor": 1.0, "virginica": 1.0},
-    "f1_score": {"setosa": 1.0, "versicolor": 1.0, "virginica": 1.0},
-}
-
-with open("metrics.json", "w") as f:
-    json.dump(metrics, f)
+{"accuracy": 0.8666666666666667, "classification_report": {"setosa": {"precision": 1.0, "recall": 1.0, "f1-score": 1.0, "support": 6.0}, "versicolor": {"precision": 0.75, "recall": 0.9, "f1-score": 0.8181818181818182, "support": 10.0}, "virginica": {"precision": 0.9166666666666666, "recall": 0.7857142857142857, "f1-score": 0.8461538461538461, "support": 14.0}, "accuracy": 0.8666666666666667, "macro avg": {"precision": 0.8888888888888888, "recall": 0.8952380952380952, "f1-score": 0.8881118881118882, "support": 30.0}, "weighted avg": {"precision": 0.8777777777777778, "recall": 0.8666666666666667, "f1-score": 0.8675990675990676, "support": 30.0}}, "random_seed": 438}
